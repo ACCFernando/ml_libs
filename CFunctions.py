@@ -105,11 +105,15 @@ def mae_calc(diff) -> float:
 def mse_calc(diff) -> float:
     return np.mean(np.power(diff,2))
 
-def ordering_check(index_pair, value_pair, i):
-    ind_a = index_pair[i]
-    ind_b = index_pair[i+1]
-    a = value_pair[ind_a]
-    b = value_pair[ind_b]
+def ordering_check(index_pairs, value_pairs, i) -> bool:
+    """
+    Returns True if the given value_pairs of y predicted and y target are ordered in the same way
+    """
+    
+    ind_a = index_pairs[i]
+    ind_b = index_pairs[i+1]
+    a = value_pairs[ind_a]
+    b = value_pairs[ind_b]
 
     return (a[0] > a[1] and b[0] > b[1]) or (a[0] < a[1] and b[0] < b[1]) or (a[0] == a[1] and b[0] == b[1])
 
