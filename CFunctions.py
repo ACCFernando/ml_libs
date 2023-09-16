@@ -23,7 +23,7 @@ def vector_division(vector1, vector2):
     return vector1 / vector2
 
 ##################################
-# Classification Metric Operations
+# Classification Metrics Operations
 ##################################
 
 def area(x,y) -> float: 
@@ -95,7 +95,23 @@ def logloss(y, y_h) -> float:
 def mean_calc(y) -> float:
     return np.mean(y)
 
+##############################
+# Regression Metrics Operations
+##############################
 
+def mae_calc(diff):
+    return np.mean(np.abs(diff))
+
+def mse_calc(diff):
+    return np.mean(np.power(diff,2))
+
+def ordering_chec(index_pair, value_pair, i):
+    ind_a = index_pair[i]
+    ind_b = index_pair[i+1]
+    a = value_pair[ind_a]
+    b = value_pair[ind_b]
+
+    return (a[0] > a[1] and b[0] > b[1]) or (a[0] < a[1] and b[0] < b[1]) or (a[0] == a[1] and b[0] == b[1])
 
 
 
