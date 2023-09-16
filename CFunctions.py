@@ -99,13 +99,13 @@ def mean_calc(y) -> float:
 # Regression Metrics Operations
 ##############################
 
-def mae_calc(diff):
+def mae_calc(diff) -> float:
     return np.mean(np.abs(diff))
 
-def mse_calc(diff):
+def mse_calc(diff) -> float:
     return np.mean(np.power(diff,2))
 
-def ordering_chec(index_pair, value_pair, i):
+def ordering_check(index_pair, value_pair, i):
     ind_a = index_pair[i]
     ind_b = index_pair[i+1]
     a = value_pair[ind_a]
