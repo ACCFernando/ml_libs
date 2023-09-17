@@ -56,6 +56,7 @@ def shannon_entropy(vector_p1) -> np.array:
             entropy.append(0)
         else:
             entropy.append(-p0*np.log2(p0) - p1*np.log2(p1))
+  
     return np.array(entropy)
 
 def information_gain_curve(partial_entropy,
@@ -93,6 +94,7 @@ def logloss(y, y_h) -> float:
     return -1*np.mean(np.where(y==1, np.log(y_h), np.log(1-y_h)))
 
 def mean_calc(y) -> float:
+   
     return np.mean(y)
 
 ##############################
@@ -100,16 +102,17 @@ def mean_calc(y) -> float:
 ##############################
 
 def mae_calc(diff) -> float:
+    
     return np.mean(np.abs(diff))
 
 def mse_calc(diff) -> float:
+    
     return np.mean(np.power(diff,2))
 
 def ordering_check(index_pairs, value_pairs, i) -> bool:
     """
     Returns True if the given value_pairs of y predicted and y target are ordered in the same way
     """
-    
     ind_a = index_pairs[i]
     ind_b = index_pairs[i+1]
     a = value_pairs[ind_a]
@@ -117,6 +120,33 @@ def ordering_check(index_pairs, value_pairs, i) -> bool:
 
     return (a[0] > a[1] and b[0] > b[1]) or (a[0] < a[1] and b[0] < b[1]) or (a[0] == a[1] and b[0] == b[1])
 
+##################################
+# Probability distribution metrics
+##################################
 
+def acum_probability_distribution_points(y_points,y) -> np.array:
+    
+    return np.array([np.sum(y_points <= v) for v in y])/y_points.size
 
+def ks_calc(y_acum1, y_acum2) -> float:
 
+    return np.max(np.abs(y_acum1,y_acum2))
+
+def deviation_calc(vector) -> float:
+
+    return np.std(vector)
+
+def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs):
+
+    prob_bin = 0
+    for i in prange(probs.size):
+        if(inf_bin <= min_values[i] and sup_bin >= max_values[i]):
+            prob_bin = prob_bin + probs[i]
+        elif(inf_bin <= min_values[i] and sup_bin < max_values[i] and sup_bin > min_values[i]):
+            prob_bin = prob_bin + probs[i]*(sup_bin - min_values[i])/(max_values[i] - min_values[i])
+        elif(inf_bin > min_values[i] and sup_bin >= max_values[i] and inf_bin < max_values[i]):
+            prob_bin = prob_bin + probs[i]*(max_values[i] - inf_bin)/(max_values[i] - min_values[i])
+        elif(inf_bin > min_values[i] and sup_bin < max_values[i]):
+            prob_bin = prob_bin + probs[i]*(sup_bin - inf_bin)/(max_values[i] - min_values[i])
+
+    return prob_bin 
