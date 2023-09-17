@@ -126,9 +126,20 @@ def ordering_check(index_pairs, value_pairs, i) -> bool:
 
 def acum_probability_distribution_points(y_points,y) -> np.array:
     
+    """
+    y_points = target
+    y = unique y_points    
+    """
+
     return np.array([np.sum(y_points <= v) for v in y])/y_points.size
 
 def ks_calc(y_acum1, y_acum2) -> float:
+    """
+    KS - Kolmogorov Smirnov
+    Difference between 2 cumulative probability distributions
+    Can be used with a theoretical distribution F(x), ex: KS = MAXx | F(x) - 1/n |
+    0 -> no separation between distributions; 1 -> perfect separation
+    """
 
     return np.max(np.abs(y_acum1,y_acum2))
 
@@ -136,7 +147,7 @@ def deviation_calc(vector) -> float:
 
     return np.std(vector)
 
-def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs):
+def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs) -> float:
 
     prob_bin = 0
     for i in prange(probs.size):
@@ -154,3 +165,4 @@ def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs):
 ###############################
 # Group and ordering operations
 ###############################
+
