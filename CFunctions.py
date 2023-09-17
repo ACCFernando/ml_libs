@@ -150,3 +150,7 @@ def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs):
             prob_bin = prob_bin + probs[i]*(sup_bin - inf_bin)/(max_values[i] - min_values[i])
 
     return prob_bin 
+
+###############################
+# Group and ordering operations
+###############################
