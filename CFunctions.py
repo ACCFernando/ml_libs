@@ -147,22 +147,53 @@ def deviation_calc(vector) -> float:
 
     return np.std(vector)
 
-def bin_probability_count(inf_bin, sup_bin, min_values, max_values, probs) -> float:
+def bin_probability_count(inf_bin:float, sup_bin:float, min_values:list, max_values:list, probs:np.array) -> float:
+    """
+    Calculate the cumulative probability of events within a specified bin range.
 
-    prob_bin = 0
-    for i in prange(probs.size):
-        if(inf_bin <= min_values[i] and sup_bin >= max_values[i]):
-            prob_bin = prob_bin + probs[i]
-        elif(inf_bin <= min_values[i] and sup_bin < max_values[i] and sup_bin > min_values[i]):
-            prob_bin = prob_bin + probs[i]*(sup_bin - min_values[i])/(max_values[i] - min_values[i])
-        elif(inf_bin > min_values[i] and sup_bin >= max_values[i] and inf_bin < max_values[i]):
-            prob_bin = prob_bin + probs[i]*(max_values[i] - inf_bin)/(max_values[i] - min_values[i])
-        elif(inf_bin > min_values[i] and sup_bin < max_values[i]):
-            prob_bin = prob_bin + probs[i]*(sup_bin - inf_bin)/(max_values[i] - min_values[i])
+    This function computes the total probability of events falling within a given range (bin),
+    defined by `inf_bin` and `sup_bin`. It accounts for partial overlaps of events with the bin range
+    by proportionally adjusting the contribution of each event's probability.
 
-    return prob_bin 
+    Parameters:
+    inf_bin (float): The lower boundary of the bin range.
+    sup_bin (float): The upper boundary of the bin range.
+    min_values (array-like): An array of minimum values, each corresponding to the lower bound of an event's range.
+    max_values (array-like): An array of maximum values, each corresponding to the upper bound of an event's range.
+    probs (array-like): An array of probabilities, each associated with the corresponding event defined by `min_values` and `max_values`.
+
+    Returns:
+    float: The cumulative probability of events occurring within the specified bin range.
+
+    The function iterates through each event, calculates the contribution of its probability
+    based on the intersection with the bin range, and accumulates these contributions to compute
+    the cumulative probability within the specified bin range.
+
+    Example:
+    >>> bin_probability_count(1.0, 2.0, [0.5, 1.5], [1.5, 2.5], [0.3, 0.4])
+    0.35
+    """
+    prob_bin = sum(
+        prob * (min(sup_bin, max_val) - max(inf_bin, min_val)) / (max_val - min_val)
+        for min_val, max_val, prob in zip(min_values, max_values, probs)
+        if max(inf_bin, min_val) < min(sup_bin, max_val)
+    )
+    return prob_bin
 
 ###############################
 # Group and ordering operations
 ###############################
+
+def unique_qt(vector) -> int:
+
+    unique_qt = 0
+    v = np.nan
+    for u in np.sort(vector):
+        if u != v:
+            unique_qt = unique_qt + 1
+            v = u
+    
+    return unique_qt
+
+
 
