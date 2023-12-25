@@ -1,6 +1,7 @@
 from numba import jit_module, prange
 import numpy as np
 import scipy.stats as norm
+from typing import List, Tuple
 
 #################
 # BASIC OPERATORS
@@ -109,39 +110,84 @@ def mse_calc(diff) -> float:
     
     return np.mean(np.power(diff,2))
 
-def ordering_check(index_pairs, value_pairs, i) -> bool:
+def ordering_check(index_pairs: List[Tuple[int, int]], 
+                   value_pairs: List[Tuple[float, float]], 
+                   i: int) -> bool:
     """
-    Returns True if the given value_pairs of y predicted and y target are ordered in the same way
-    """
-    ind_a = index_pairs[i]
-    ind_b = index_pairs[i+1]
-    a = value_pairs[ind_a]
-    b = value_pairs[ind_b]
+    Check if two pairs of values are ordered in the same way.
 
-    return (a[0] > a[1] and b[0] > b[1]) or (a[0] < a[1] and b[0] < b[1]) or (a[0] == a[1] and b[0] == b[1])
+    This function determines whether two pairs of values (a and b) are ordered
+    similarly. Both pairs are considered as (predicted, target) values. The
+    function returns True if both pairs are in the same order (both ascending,
+    both descending, or both equal).
+
+    Parameters:
+    index_pairs (list of tuples): A list of index pairs.
+    value_pairs (list of tuples): A list of value pairs (predicted, target).
+    i (int): The index in index_pairs to check.
+
+    Returns:
+    bool: True if the pairs at index i and i+1 in value_pairs are ordered in the
+          same way, False otherwise.
+    """
+    index_a, index_b = index_pairs[i]
+    predicted_a, target_a = value_pairs[index_a]
+    predicted_b, target_b = value_pairs[index_b]
+
+    return ((predicted_a > target_a and predicted_b > target_b) or
+            (predicted_a < target_a and predicted_b < target_b) or
+            (predicted_a == target_a and predicted_b == target_b))
+
 
 ##################################
 # Probability distribution metrics
 ##################################
 
-def acum_probability_distribution_points(y_points,y) -> np.array:
-    
+def acum_probability_distribution_points(y_points: List[float], y: List[float]) -> List[float]:
     """
-    y_points = target
-    y = unique y_points    
-    """
+    Calculate the cumulative probability distribution for a given set of points.
 
-    return np.array([np.sum(y_points <= v) for v in y])/y_points.size
+    This function computes the cumulative distribution of the `y_points` array 
+    with respect to the unique values in `y`. It returns an array representing 
+    the cumulative proportion of `y_points` that are less than or equal to each 
+    value in `y`.
 
-def ks_calc(y_acum1, y_acum2) -> float:
-    """
-    KS - Kolmogorov Smirnov
-    Difference between 2 cumulative probability distributions
-    Can be used with a theoretical distribution F(x), ex: KS = MAXx | F(x) - 1/n |
-    0 -> no separation between distributions; 1 -> perfect separation
-    """
+    Parameters:
+    y_points (List[float]): The array of data points for which the cumulative 
+                            distribution is to be calculated.
+    y (List[float]): An array of unique values from `y_points` that serve as 
+                     reference points for the cumulative calculation.
 
-    return np.max(np.abs(y_acum1,y_acum2))
+    Returns:
+    List[float]: An array of cumulative probabilities corresponding to each value 
+                 in `y`.
+    """
+    return np.array([np.sum([point <= v for point in y_points]) for v in y]) / len(y_points)
+
+def ks_calc(y_acum1: List[float], y_acum2: List[float]) -> float:
+    """
+    Calculate the Kolmogorov-Smirnov statistic for two cumulative distributions.
+
+    The Kolmogorov-Smirnov statistic is a measure of the maximum deviation 
+    between two cumulative probability distributions. It is commonly used 
+    to test the hypothesis that two samples are drawn from the same distribution,
+    or to compare a sample distribution with a theoretical distribution.
+
+    The KS statistic ranges from 0 (indicating no separation between distributions)
+    to 1 (indicating perfect separation).
+
+    Parameters:
+    y_acum1 (List[float]): The first cumulative probability distribution.
+    y_acum2 (List[float]): The second cumulative probability distribution.
+
+    Returns:
+    float: The maximum absolute difference between the two cumulative 
+           probability distributions.
+    """
+    y_acum1_array = np.array(y_acum1)
+    y_acum2_array = np.array(y_acum2)
+    return np.max(np.abs(y_acum1_array - y_acum2_array))
+
 
 def deviation_calc(vector) -> float:
 
@@ -181,7 +227,7 @@ def bin_probability_count(inf_bin:float, sup_bin:float, min_values:list, max_val
     return prob_bin
 
 ###############################
-# Group and ordering operations
+# Grouping and ordering operations
 ###############################
 
 def unique_qt(vector) -> int:
@@ -194,6 +240,87 @@ def unique_qt(vector) -> int:
             v = u
     
     return unique_qt
+
+def unique_values_and_counts(vector: np.ndarray) -> Tuple[np.ndarray, np.ndarray, int]:
+    """
+    Calculate unique values and their counts in a given numpy array.
+
+    This function sorts the input array, computes the unique values in the array,
+    and counts the number of occurrences of each unique value. It returns the
+    unique values, their counts, and the total number of unique values.
+
+    Parameters:
+    vector (np.ndarray): A numpy array of numeric values.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray, int]: A tuple containing the array of unique values,
+                                        the array of counts for each unique value,
+                                        and the total number of unique values.
+    """
+    unique_values, counts = np.unique(vector, return_counts=True)
+    num_unique_values = len(unique_values)
+    return unique_values, counts, num_unique_values
+
+import numpy as np
+from typing import Tuple, List
+
+def indices_and_counts(vector: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+    """
+    Calculate the indices, counts, and cumulative counts of unique values in a numpy array.
+
+    This function sorts the array, determines the indices of the sorted array, and counts
+    the occurrences of each unique value. It returns the indices of the sorted array, 
+    cumulative counts up to each unique value, counts of each unique value, and the 
+    total number of unique values.
+
+    Parameters:
+    vector (np.ndarray): A numpy array of numeric values.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray, np.ndarray, int]: A tuple containing the sorted indices,
+                                                    the cumulative counts up to each unique value,
+                                                    the counts of each unique value,
+                                                    and the total number of unique values.
+    """
+    if len(vector) == 0:
+        return np.array([]), np.array([]), np.array([]), 0
+
+    inds_sorted = np.argsort(vector)
+    vector_sorted, counts = np.unique(vector[inds_sorted], return_counts=True)
+    cum_counts = np.cumsum(counts[:-1])
+    num_unique_values = len(vector_sorted)
+
+    return inds_sorted, cum_counts, counts, num_unique_values
+
+
+def indices_unique_values_and_counts(vector: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]:
+    """
+    Calculate the sorted indices, unique values, their counts, and cumulative counts in a numpy array.
+
+    This function sorts the array, determines the unique values and their counts,
+    and returns the sorted indices, the unique values, their cumulative counts 
+    (up to each unique value), their individual counts, and the total number of 
+    unique values.
+
+    Parameters:
+    vector (np.ndarray): A numpy array of numeric values.
+
+    Returns:
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]: A tuple containing 
+    the sorted indices, the array of unique values, the cumulative counts up to 
+    each unique value, the counts of each unique value, and the total number of 
+    unique values.
+    """
+    if len(vector) == 0:
+        return np.array([]), np.array([]), np.array([]), np.array([]), 0
+
+    inds_sorted = np.argsort(vector)
+    unique_values, counts = np.unique(vector[inds_sorted], return_counts=True)
+    cum_counts = np.cumsum(counts[:-1])
+    num_unique_values = len(unique_values)
+
+    return inds_sorted, unique_values, cum_counts, counts, num_unique_values
+
 
 
 
