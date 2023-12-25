@@ -43,36 +43,53 @@ def argmax_vector(vector) -> int:
 
     return np.argmax(vector)
 
-def shannon_entropy(vector_p1) -> np.array:
+def shannon_entropy(probabilities: List[float]) -> np.ndarray:
     """
-    Quantifies the amount of uncertainty in and associated with a random value.
-    Measures the average amount of information contained in an event or set of events
-    Bigger entropy = greater uncertainty; max on equal probability vector
-    log2 -> measurement in bits or iformation units 
+    Calculate the Shannon entropy for a list of probabilities.
+
+    Shannon entropy quantifies the amount of uncertainty or unpredictability 
+    in a set of events, measured in bits. It computes the average information 
+    content for each event. Higher entropy indicates greater uncertainty. 
+    The function returns an array of entropy values for each probability in 
+    the input list.
+
+    Parameters:
+    probabilities (List[float]): A list of probabilities, where each probability 
+                                 is a number between 0 and 1.
+
+    Returns:
+    np.ndarray: An array containing the Shannon entropy values for each probability.
     """
-    entropy = []
-    for p1 in vector_p1:
-        p0 = 1 - p1
-        if p0 == 0 or p1 == 0:
-            entropy.append(0)
-        else:
-            entropy.append(-p0*np.log2(p0) - p1*np.log2(p1))
-  
+    entropy = [-p * np.log2(p) - (1 - p) * np.log2(1 - p) if p != 0 and p != 1 else 0 for p in probabilities]
     return np.array(entropy)
 
-def information_gain_curve(partial_entropy,
-                           accum_quant,
-                           partial_entropy_c, 
-                           accum_quant_c, 
-                           total_quant,
-                           initial_entropy) -> np.array:
-    """"
-    Measure how much a particular feature reduces uncertainty (entropy)
+def information_gain_curve(partial_entropy: List[float],
+                           accum_quant: List[float],
+                           partial_entropy_c: List[float], 
+                           accum_quant_c: List[float], 
+                           total_quant: float,
+                           initial_entropy: float) -> np.ndarray:
     """
-    entropy = (partial_entropy*accum_quant + partial_entropy_c*accum_quant_c)/total_quant
+    Calculate the information gain curve for a given feature.
+
+    Parameters:
+    partial_entropy (List[float]): A list of entropies for the positive class.
+    accum_quant (List[float]): A list of cumulative quantities for the positive class.
+    partial_entropy_c (List[float]): A list of entropies for the negative class.
+    accum_quant_c (List[float]): A list of cumulative quantities for the negative class.
+    total_quant (float): The total quantity of elements.
+    initial_entropy (float): The initial entropy before any split.
+
+    Returns:
+    np.ndarray: An array representing the normalized information gain curve.
+    """
+    entropy = (np.array(partial_entropy) * np.array(accum_quant) +
+               np.array(partial_entropy_c) * np.array(accum_quant_c)) / total_quant
+
     entropy = np.append(entropy, initial_entropy)
 
-    return (initial_entropy - entropy)/initial_entropy
+    return (initial_entropy - entropy) / initial_entropy
+
 
 def partial_entropy_vector(entropy_vector,
                            entropy_aux,
