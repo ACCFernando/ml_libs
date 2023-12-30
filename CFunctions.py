@@ -90,26 +90,55 @@ def information_gain_curve(partial_entropy: List[float],
 
     return (initial_entropy - entropy) / initial_entropy
 
+def partial_entropy_vector(entropy_vector, entropy_aux, partial_entropy_c, accum_quant_c, partial_entropy_r, remain_quant, total_quant) -> np.array:
+    """
+    Calculate the partial entropy and append it to the given entropy vector.
 
-def partial_entropy_vector(entropy_vector,
-                           entropy_aux,
-                           partial_entropy_c,
-                           accum_quant_c,
-                           partial_entropy_r,
-                           remain_quant,
-                           total_quant
-                           ) -> np.array:
-    entropy = entropy_aux + (partial_entropy_c*accum_quant_c + partial_entropy_r*remain_quant)/total_quant
+    Args:
+    - entropy_vector (np.array): The vector to which the partial entropy will be appended.
+    - entropy_aux (float): An auxiliary value for entropy calculation.
+    - partial_entropy_c (float): Partial entropy component related to accumulated quantity.
+    - accum_quant_c (float): Accumulated quantity contributing to the partial entropy.
+    - partial_entropy_r (float): Partial entropy component related to the remaining quantity.
+    - remain_quant (float): Remaining quantity contributing to the partial entropy.
+    - total_quant (float): Total quantity used for normalizing the entropy calculation.
 
+    Returns:
+    - np.array: The updated entropy vector with the newly calculated entropy appended.
+
+    Raises:
+    - ValueError: If total_quant is zero, to prevent division by zero.
+    """
+    if total_quant == 0:
+        raise ValueError("total_quant must not be zero to avoid division by zero.")
+
+    entropy = entropy_aux + (partial_entropy_c * accum_quant_c + partial_entropy_r * remain_quant) / total_quant
     return np.append(entropy_vector, entropy)
+
 
 def entropy_vector_normalizer(entropy_vector, initial_entropy) -> np.array:
 
     return (initial_entropy - entropy_vector)/initial_entropy
 
 def logloss(y, y_h) -> float:
+    """
+    Calculates the logarithmic loss between true labels and predicted probabilities.
 
-    return -1*np.mean(np.where(y==1, np.log(y_h), np.log(1-y_h)))
+    Args:
+    - y (np.array): True binary labels (1 or 0).
+    - y_h (np.array): Predicted probabilities, corresponding to the probability of the label being 1.
+
+    Returns:
+    - float: The logarithmic loss value.
+
+    Raises:
+    - ValueError: If any predicted probability is outside the range [0, 1].
+    """
+    if np.any((y_h < 0) | (y_h > 1)):
+        raise ValueError("Predicted probabilities must be between 0 and 1.")
+
+    return -1 * np.mean(np.where(y == 1, np.log(y_h), np.log(1 - y_h)))
+
 
 def mean_calc(y) -> float:
    
@@ -338,6 +367,84 @@ def indices_unique_values_and_counts(vector: np.ndarray) -> Tuple[np.ndarray, np
 
     return inds_sorted, unique_values, cum_counts, counts, num_unique_values
 
+###################################################
+#Conditiona Metrics (classification and regression)
+###################################################
 
+##### conditional entropy block #####
+def calculate_initial_entropy(quantities1, non_zero_count) -> float:
+    """
+    Calculate the initial entropy.
 
+    Args:
+    quantities1 (numpy.array): Array of quantities for the first condition.
+    non_zero_count (int): The count of non-zero elements.
+
+    Returns:
+    float: The initial entropy.
+    """
+    p_ini = np.sum(quantities1)/non_zero_count
+    pc_ini = 1 - p_ini
+    if(p_ini == 0 or pc_ini == 0):
+        initial_entropy = 0
+    else:
+        initial_entropy = -p_ini*np.log2(p_ini) - pc_ini*np.log2(pc_ini)
+    
+    return initial_entropy
+
+def calculate_partial_entropies(probabilities) -> np.array:
+    """
+    Calculate partial entropies.
+
+    Args:
+    probabilities (numpy.array): Array of probabilities.
+
+    Returns:
+    numpy.array: Array of calculated partial entropies.
+    """
+    entropies = []
+    for p in probabilities:
+        pc = 1 - p
+        entropies.append(0 if p == 0 or pc == 0 else -p * np.log2(p) - pc * np.log2(pc))
+    return np.array(entropies)
+
+def calculate_relative_gain(ig, quantities, non_zero_count) -> float:
+    """
+    Calculate the relative gain.
+
+    Args:
+    ig (float): The information gain.
+    quantities (numpy.array): Array of total quantities.
+    non_zero_count (int): The count of non-zero elements.
+
+    Returns:
+    float: The relative gain.
+    """
+    fractions = quantities / non_zero_count
+    entropy_division = -np.sum(fractions * np.log2(fractions))
+    return ig / entropy_division if entropy_division != 0 else 0
+
+def calculate_conditional_ig_rg(quantities1, quantities, probabilities1, non_zero_count) -> Tuple[float, float]:
+    """
+    Calculate the conditional information gain (IG) and relative gain (RG).
+
+    Args:
+    quantities1 (numpy.array): Array of quantities for the first condition.
+    quantities (numpy.array): Array of total quantities.
+    probabilities1 (numpy.array): Array of probabilities for the first condition.
+    non_zero_count (int): The count of non-zero elements.
+
+    Returns:
+    Tuple[float, float]: A tuple containing the information gain (IG) and relative gain (RG).
+    """
+    initial_entropy = calculate_initial_entropy(quantities1, non_zero_count)
+    partial_entropies = calculate_partial_entropies(probabilities1)
+    entropy = np.sum(partial_entropies * quantities) / non_zero_count
+
+    ig = (initial_entropy - entropy) / initial_entropy if initial_entropy != 0 else 0
+
+    rg = calculate_relative_gain(ig, quantities, non_zero_count) if quantities.size > 1 else 0
+
+    return ig, rg
+##### /conditional entropy block #####
 
