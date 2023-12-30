@@ -371,8 +371,8 @@ def indices_unique_values_and_counts(vector: np.ndarray) -> Tuple[np.ndarray, np
 #Conditiona Metrics (classification and regression)
 ###################################################
 
-##### conditional entropy block #####
-def calculate_initial_entropy(quantities1, non_zero_count) -> float:
+# conditional entropy block
+def calculate_initial_entropy(quantities1: np.ndarray, non_zero_count: int) -> float:
     """
     Calculate the initial entropy.
 
@@ -392,7 +392,7 @@ def calculate_initial_entropy(quantities1, non_zero_count) -> float:
     
     return initial_entropy
 
-def calculate_partial_entropies(probabilities) -> np.array:
+def calculate_partial_entropies(probabilities: np.ndarray) -> np.array:
     """
     Calculate partial entropies.
 
@@ -408,7 +408,7 @@ def calculate_partial_entropies(probabilities) -> np.array:
         entropies.append(0 if p == 0 or pc == 0 else -p * np.log2(p) - pc * np.log2(pc))
     return np.array(entropies)
 
-def calculate_relative_gain(ig, quantities, non_zero_count) -> float:
+def calculate_relative_gain(ig: float, quantities: np.ndarray, non_zero_count: int) -> float:
     """
     Calculate the relative gain.
 
@@ -424,7 +424,7 @@ def calculate_relative_gain(ig, quantities, non_zero_count) -> float:
     entropy_division = -np.sum(fractions * np.log2(fractions))
     return ig / entropy_division if entropy_division != 0 else 0
 
-def calculate_conditional_ig_rg(quantities1, quantities, probabilities1, non_zero_count) -> Tuple[float, float]:
+def calculate_conditional_ig_rg(quantities1: np.ndarray, quantities: np.ndarray, probabilities1: np.ndarray, non_zero_count: int) -> Tuple[float, float]:
     """
     Calculate the conditional information gain (IG) and relative gain (RG).
 
@@ -446,5 +446,62 @@ def calculate_conditional_ig_rg(quantities1, quantities, probabilities1, non_zer
     rg = calculate_relative_gain(ig, quantities, non_zero_count) if quantities.size > 1 else 0
 
     return ig, rg
-##### /conditional entropy block #####
+# /conditional entropy block
 
+# conditional r2 block
+def calculate_r2(y: np.ndarray, quantities: np.ndarray, conditional_vars: np.ndarray, non_zero_count: int) -> float:
+    """
+    Calculate R2.
+
+    Args:
+    y (np.ndarray): Array of dependent variable values (floats).
+    quantities (np.ndarray): Array of quantities (ints or floats).
+    conditional_vars (np.ndarray): Array of conditional variables (floats).
+    non_zero_count (int): The count of non-zero elements.
+
+    Returns:
+    float: The calculated R2 value.
+    """
+    var_ini = np.var(y)
+    return 1 - np.sum(quantities * conditional_vars) / (non_zero_count * var_ini)
+
+def calculate_r2_feature(values: np.ndarray, quantities: np.ndarray, conditional_vars_feature: np.ndarray, non_zero_count: int) -> float:
+    """
+    Calculate R2 for a specific feature.
+
+    Args:
+    values (np.ndarray): Array of values for feature analysis (floats).
+    quantities (np.ndarray): Array of quantities (ints or floats).
+    conditional_vars_feature (np.ndarray): Array of conditional variables for the feature (floats).
+    non_zero_count (int): The count of non-zero elements.
+
+    Returns:
+    float: The calculated R2 value for the feature.
+    """
+    var_ini_feature = np.var(values)
+    return 1 - np.sum(quantities * conditional_vars_feature) / (non_zero_count * var_ini_feature)
+
+def calculate_r2_and_conditional_r2_ratio(y: np.ndarray, conditional_vars: np.ndarray, quantities: np.ndarray, non_zero_count: int, values: np.ndarray, conditional_vars_feature: np.ndarray) -> Tuple[float, float]:
+    """
+    Calculate R2 and the ratio of R2 conditionally, normalized by initial entropy.
+
+    Args:
+    y (np.ndarray): Array of dependent variable values (floats).
+    conditional_vars (np.ndarray): Array of conditional variables (floats).
+    quantities (np.ndarray): Array of quantities (ints or floats).
+    non_zero_count (int): The count of non-zero elements.
+    values (np.ndarray): Array of values for feature analysis (floats).
+    conditional_vars_feature (np.ndarray): Array of conditional variables for feature (floats).
+
+    Returns:
+    Tuple[float, float]: A tuple containing R2 and the conditional R2 ratio.
+    """
+    r2 = calculate_r2(y, quantities, conditional_vars, non_zero_count)
+    r2_feature = calculate_r2_feature(values, quantities, conditional_vars_feature, non_zero_count)
+
+    ratio_r2 = r2 / r2_feature if r2_feature > 0 else 0
+
+    return r2, ratio_r2
+
+
+# /conditional r2 block
